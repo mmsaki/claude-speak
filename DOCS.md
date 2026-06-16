@@ -114,6 +114,7 @@ claude-speak rnext | rprev          jump a whole response (down / up)
 claude-speak replay | last | goto N
 claude-speak pause | resume | toggle | stop
 claude-speak mute | unmute | mutetoggle
+claude-speak engine <say|openai|elevenlabs>
 claude-speak voice <name|id> | voices
 claude-speak list | status | sessions
 claude-speak keys                   interactive single-key control (n/p/r/space/q)
@@ -128,7 +129,15 @@ terminal: `n`/`→` next · `p`/`←` prev · `r` replay · `space` pause · `q`
 ## Voices
 
 Engine is auto-detected: **ElevenLabs → OpenAI → macOS `say`** (whichever key is
-present). Keys live in `chmod 600` files:
+present). Switch any time:
+
+```bash
+claude-speak engine say          # or openai / elevenlabs
+claude-speak voices              # lists voices for the current engine
+claude-speak voice Daniel        # for `say`, a macOS voice name; for ElevenLabs, a name/id
+```
+
+Keys live in `chmod 600` files:
 
 ```bash
 printf 'sk_...' > ~/.claude/.elevenlabs_key && chmod 600 ~/.claude/.elevenlabs_key
@@ -161,6 +170,7 @@ by every hook); environment variables override the file. Copy
 | `CLAUDE_TTS_MAX_LAG` | `2` | follow mode: stay within N segments of newest |
 | `CLAUDE_TTS_EAGER` | `1` | synth on enqueue (parallel) vs on-demand |
 | `CLAUDE_TTS_GLOBAL_LOCK` | `1` | one audible segment at a time across sessions |
+| `CLAUDE_TTS_IDLE_EXIT` | `600` | seconds before an idle player self-exits (0 = never) |
 | `CLAUDE_TTS_SKIP_RE` | — | extra regex of phrases to never speak |
 | `CLAUDE_SPEAK_HOME` | `~/.claude/claude-speak` | state directory |
 

@@ -24,9 +24,32 @@ DIR="$(cd "$(dirname "$SELF")" && pwd)"; . "$DIR/lib.sh"
 
 cmd="${1:-status}"; arg="${2:-}"
 
+if [ "$cmd" = "engine" ]; then
+  case "$arg" in
+    say|openai|elevenlabs) printf '%s' "$arg" > "$CS_HOME/engine"
+      echo "claude-speak: engine -> $arg (applies to the next spoken segment)" ;;
+    "") echo "engine: $(cs_engine)" ;;
+    *)  echo "claude-speak: unknown engine '$arg' (use say | openai | elevenlabs)"; exit 1 ;;
+  esac
+  exit 0
+fi
+
 if [ "$cmd" = "voices" ] || [ "$cmd" = "voice" ]; then
-  key=$(cs_key elevenlabs)
   cur=$(cat "$CS_HOME/voice" 2>/dev/null)
+
+  # macOS `say` has its own voice namespace (Samantha, Alex, Daniel, ...).
+  if [ "$(cs_engine)" = "say" ]; then
+    if [ "$cmd" = "voices" ]; then
+      echo "macOS say voices ( * = current ) — claude-speak voice <name>:"
+      /usr/bin/say -v '?' | /usr/bin/awk -v c="$cur" '{m=($1==c)?"* ":"  "; printf "%s%-16s %s\n", m, $1, $2}'
+    else
+      [ -n "$arg" ] || { echo "usage: claude-speak voice <name>"; exit 1; }
+      printf '%s' "$arg" > "$CS_HOME/voice"; echo "claude-speak: voice -> $arg"
+    fi
+    exit 0
+  fi
+
+  key=$(cs_key elevenlabs)
   resp=""; [ -n "$key" ] && resp=$(/usr/bin/curl -s -H "xi-api-key: $key" https://api.elevenlabs.io/v1/voices)
   has_api=0; printf '%s' "$resp" | /usr/bin/jq -e '.voices' >/dev/null 2>&1 && has_api=1
 

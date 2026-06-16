@@ -27,6 +27,7 @@ cs_key() { # $1 = openai|elevenlabs -> prints key or nothing
 }
 
 cs_engine() {
+  [ -s "$CS_HOME/engine" ] && { tr -d '[:space:]' < "$CS_HOME/engine"; return; }  # runtime override
   if [ -n "${CLAUDE_TTS_ENGINE:-}" ]; then printf '%s' "$CLAUDE_TTS_ENGINE"; return; fi
   if cs_have_key elevenlabs; then printf 'elevenlabs'; return; fi
   if cs_have_key openai;     then printf 'openai';     return; fi

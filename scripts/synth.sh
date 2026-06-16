@@ -11,6 +11,11 @@ text=$(cat)
 engine=$(cs_engine)
 
 say_fallback() {
+  local v=""; [ -s "$CS_HOME/voice" ] && v=$(cat "$CS_HOME/voice")
+  # use the chosen say voice if valid; otherwise the system default
+  if [ -n "$v" ] && /usr/bin/say -v "$v" -o "$base.aiff" "$text" 2>/dev/null; then
+    printf '%s' "$base.aiff"; return 0
+  fi
   /usr/bin/say -o "$base.aiff" "$text" 2>/dev/null && { printf '%s' "$base.aiff"; return 0; }
   return 1
 }

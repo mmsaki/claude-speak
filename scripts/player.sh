@@ -17,6 +17,7 @@ PLAY="${CLAUDE_TTS_PLAY_CMD:-/usr/bin/afplay}"
 
 pos=$(cat "$sd/pos" 2>/dev/null || echo 1)
 paused=0; INT=0; apid=""
+last_active=$SECONDS   # for idle self-exit (abandoned sessions)
 muted=0; [ -f "$sd/muted" ] && muted=1
 
 qlock() { local n=0; while ! mkdir "$sd/cmdq.lock" 2>/dev/null && [ $n -lt 100 ]; do sleep 0.02; n=$((n+1)); done; }
@@ -36,6 +37,7 @@ resp_before() { awk -v p="$1" '$1<p{c=$1} END{print c?c:1}' "$sd/responses" 2>/d
 resp_after()  { awk -v p="$1" '$1>p{print $1; exit}' "$sd/responses" 2>/dev/null; }
 
 handle() {
+  last_active=$SECONDS   # any control command counts as activity
   local total; total=$(cs_seg_count "$sd")
   set -- $1
   case "${1:-}" in
@@ -72,6 +74,12 @@ nap() { sleep "${1:-0.5}" & wait $! 2>/dev/null; }   # interruptible by SIGUSR1
 
 while true; do
   drain
+  # Self-exit when idle (abandoned session): stop hogging the speaker lock —
+  # the next hook respawns us. Disable with CLAUDE_TTS_IDLE_EXIT=0.
+  if [ "${CLAUDE_TTS_IDLE_EXIT:-600}" -gt 0 ] 2>/dev/null \
+     && [ $((SECONDS - last_active)) -ge "${CLAUDE_TTS_IDLE_EXIT:-600}" ]; then
+    kill "$READER" 2>/dev/null; rm -f "$fifo"; exit 0
+  fi
   # Muted: silent, but ride the live edge so unmute is current (no backlog).
   if [ "$muted" = 1 ]; then
     pos=$(( $(cs_seg_count "$sd") + 1 )); echo "$pos" > "$sd/pos"; nap 0.5; continue
@@ -121,5 +129,6 @@ while true; do
   apid=""
   cs_speaker_release
   drain
+  last_active=$SECONDS            # we just played something
   [ "$INT" = 0 ] && pos=$((pos+1))   # natural end -> advance
 done
