@@ -32,8 +32,11 @@ case "$ev" in
     sid=$(printf '%s' "$payload" | /usr/bin/jq -r '.session_id // empty')
     if [ -n "$sid" ]; then
       sd=$(cs_session_dir "$sid")
+      # stop voice immediately: kill the player daemon AND its in-flight afplay
       [ -f "$sd/player.pid" ] && kill "$(cat "$sd/player.pid" 2>/dev/null)" 2>/dev/null
       pkill -f "player.sh $sd" 2>/dev/null
+      pkill -f "afplay $sd/" 2>/dev/null
+      cue reset                      # goodbye sound on exit
       rm -rf "$sd"
     fi ;;
   sessionstart)
