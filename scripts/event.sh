@@ -13,7 +13,13 @@ voice() { printf '%s' "$payload" | bash "$CS_DIR/speak.sh" "$1"; }
 
 case "$ev" in
   userprompt)   cue send;   hap light ;;
-  pretool)      cue tick;   hap light;  voice step ;;
+  pretool)
+    tool=$(printf '%s' "$payload" | /usr/bin/jq -r '.tool_name // empty')
+    case "$tool" in
+      AskUserQuestion|ExitPlanMode) cue permission; hap medium ;;  # Claude needs your answer
+      *)                            cue tick;       hap light  ;;
+    esac
+    voice step ;;
   posttool)
     err=$(printf '%s' "$payload" | /usr/bin/jq -r '
       (.tool_response.error? // empty),
