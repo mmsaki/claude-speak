@@ -4,3 +4,7 @@ scripts/bin/
 *.log
 __pycache__/
 *.pyc
+
+# zig
+zig-out/
+.zig-cache/
