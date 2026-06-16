@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # speak.sh [step|stop]
-# Hook entry. step = PreToolUse (read prose written so far); stop = end of turn
-# (flush remaining prose, then mark a response boundary so the next turn is a new
-# "response" for replay navigation). Enqueues cleaned prose as audio segments.
+# Hook entry. step = PreToolUse (read prose written so far); stop = end of turn.
+# Enqueues newly-written cleaned prose as audio segments (chunked, never dropped).
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; . "$DIR/lib.sh"
 [ "${CLAUDE_TTS:-1}" = "0" ] && exit 0
@@ -17,40 +16,7 @@ sid=$(printf '%s' "$payload" | /usr/bin/jq -r '.session_id // empty')
 sd=$(cs_session_dir "$sid"); mkdir -p "$sd/segs"
 printf '%s' "$sd" > "$CS_HOME/current"          # newest active session (for the CLI)
 
-# New cleaned prose since the spoken cursor.
-prose=$(cs_assistant_prose "$transcript")
-L=${#prose}
-lock="$sd/cursor.lock"; n=0
-while ! mkdir "$lock" 2>/dev/null && [ $n -lt 40 ]; do sleep 0.05; n=$((n+1)); done
-C=$(cat "$sd/cursor" 2>/dev/null || echo 0); [ "$C" -le "$L" ] 2>/dev/null || C=0
-new="${prose:$C}"
-echo "$L" > "$sd/cursor"
-rmdir "$lock" 2>/dev/null || true
-
-new=$(printf '%s' "$new" | head -c "${CLAUDE_TTS_MAXCHARS:-1500}" | tr '\n' ' ' \
-      | /usr/bin/sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')
-
-if [ -n "$new" ] && printf '%s' "$new" | grep -q '[^[:space:]]'; then
-  # Allocate the next index + reserve its .txt atomically.
-  ilock="$sd/idx.lock"; n=0
-  while ! mkdir "$ilock" 2>/dev/null && [ $n -lt 40 ]; do sleep 0.05; n=$((n+1)); done
-  idx=$(( $(cs_seg_count "$sd") + 1 ))
-  txt=$(cs_seg_txt "$sd" "$idx")
-  printf '%s' "$new" > "$txt"
-  # Record a response boundary at the first segment of each response.
-  if [ -f "$sd/resp_pending" ] || [ ! -s "$sd/responses" ]; then
-    echo "$idx" >> "$sd/responses"; rm -f "$sd/resp_pending"
-  fi
-  rmdir "$ilock" 2>/dev/null || true
-  # Eager background synth: read each chunk the moment it's written (in parallel
-  # with the rest of the turn still running), instead of waiting at playback.
-  # CLAUDE_TTS_EAGER=0 reverts to on-demand (cheaper — the player then
-  # synthesizes only the segments it actually plays).
-  if [ "${CLAUDE_TTS_EAGER:-1}" = "1" ]; then
-    ( cat "$txt" | bash "$CS_DIR/synth.sh" "${txt%.txt}" ) >/dev/null 2>&1 &
-  fi
-fi
-
+cs_enqueue_new "$sd" "$transcript" 1 || true
 cs_ensure_player "$sd"
 
 # Follow mode: if we're lagging past MAX_LAG, nudge the player to catch up now.
@@ -59,5 +25,11 @@ if [ -n "${CLAUDE_TTS_MAX_LAG:-}" ] && [ -f "$sd/player.pid" ]; then
   [ $((tot - ppos)) -gt "$CLAUDE_TTS_MAX_LAG" ] && kill -USR1 "$(cat "$sd/player.pid")" 2>/dev/null || true
 fi
 
-[ "$mode" = stop ] && : > "$sd/resp_pending"    # next turn starts a new response
+if [ "$mode" = stop ]; then
+  : > "$sd/resp_pending"    # next turn starts a new response
+  # The final message often lands in the transcript a beat AFTER Stop fires, so
+  # a single read here would speak it one turn late. Poll briefly to catch it
+  # now (no boundary marking — it belongs to the response we just finished).
+  ( for _ in 1 2 3 4 5 6; do sleep 0.5; cs_enqueue_new "$sd" "$transcript" 0 || true; done ) >/dev/null 2>&1 &
+fi
 exit 0

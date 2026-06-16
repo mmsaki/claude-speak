@@ -70,6 +70,50 @@ cs_seg_txt()   { printf '%s/segs/%04d.txt' "$1" "$2"; }            # $1 sd $2 id
 cs_seg_audio() { ls "$1"/segs/$(printf '%04d' "$2").* 2>/dev/null | grep -v '\.txt$' | head -1; }
 cs_seg_count() { ls "$1"/segs/*.txt 2>/dev/null | wc -l | tr -d ' '; }
 
+# Enqueue all cleaned prose written since the cursor, split into <=MAXCHARS
+# chunks (never dropping the tail of long messages). $3=1 marks a response
+# boundary on the first chunk (set 0 for the post-Stop catch-up).
+# Returns 0 if anything was enqueued.
+cs_enqueue_new() {  # $1 sd  $2 transcript  $3 mark_boundary
+  local sd="$1" transcript="$2" mark="${3:-1}"
+  local prose L C delta lock n=0
+  prose=$(cs_assistant_prose "$transcript")
+  L=${#prose}
+  lock="$sd/cursor.lock"
+  while ! mkdir "$lock" 2>/dev/null && [ $n -lt 40 ]; do sleep 0.05; n=$((n+1)); done
+  C=$(cat "$sd/cursor" 2>/dev/null || echo 0); [ "$C" -le "$L" ] 2>/dev/null || C=0
+  delta="${prose:$C}"
+  printf '%s' "$L" > "$sd/cursor"
+  rmdir "$lock" 2>/dev/null || true
+
+  delta=$(printf '%s' "$delta" | tr '\n' ' ' | /usr/bin/sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')
+  printf '%s' "$delta" | grep -q '[^[:space:]]' || return 1
+
+  local max="${CLAUDE_TTS_MAXCHARS:-1500}" first=1 chunk rest ilock idx txt m
+  while [ -n "$delta" ]; do
+    if [ ${#delta} -le "$max" ]; then
+      chunk="$delta"; rest=""
+    else
+      chunk="${delta:0:$max}"
+      rest="${chunk##* }"; [ -n "$rest" ] && [ "$rest" != "$chunk" ] && chunk="${chunk% *}"
+      rest="${delta:${#chunk}}"; rest="${rest# }"
+    fi
+    delta="$rest"
+    ilock="$sd/idx.lock"; m=0
+    while ! mkdir "$ilock" 2>/dev/null && [ $m -lt 40 ]; do sleep 0.05; m=$((m+1)); done
+    idx=$(( $(cs_seg_count "$sd") + 1 ))
+    txt=$(cs_seg_txt "$sd" "$idx")
+    printf '%s' "$chunk" > "$txt"
+    if [ "$mark" = 1 ] && [ "$first" = 1 ] && { [ -f "$sd/resp_pending" ] || [ ! -s "$sd/responses" ]; }; then
+      echo "$idx" >> "$sd/responses"; rm -f "$sd/resp_pending"
+    fi
+    rmdir "$ilock" 2>/dev/null || true
+    first=0
+    [ "${CLAUDE_TTS_EAGER:-1}" = "1" ] && ( cat "$txt" | bash "$CS_DIR/synth.sh" "${txt%.txt}" ) >/dev/null 2>&1 &
+  done
+  return 0
+}
+
 # --- global speaker lock (serialize audible playback across ALL sessions) --
 # Per-session queues stay independent; this only ensures one sound at a time so
 # two Claude CLIs don't talk over each other. Non-blocking + stale-pid aware.
