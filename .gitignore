@@ -1,6 +1,6 @@
 # compiled, platform-specific helper (build per README)
-scripts/bin/
 .DS_Store
 *.log
 __pycache__/
 *.pyc
+scripts/bin/*.o
