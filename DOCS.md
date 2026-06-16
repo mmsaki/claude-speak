@@ -50,11 +50,10 @@ speak: transcript ─▶ clean to prose ─▶ enqueue new text ─▶ player da
 
 All cues are synthesized procedurally (no audio files shipped) by
 `scripts/gen_sounds.py`, rendered once to WAV in `~/.claude/claude-speak/sounds/`.
-Available: `send tick notify success failure done reset interrupted running
-config permission blip copied hover death`. Audition any:
+The six wired cues: `send tick permission failure reset running`. Audition any:
 
 ```bash
-bash scripts/cue.sh success
+bash scripts/cue.sh reset
 ```
 
 To re-render after editing recipes: `rm ~/.claude/claude-speak/sounds/.rendered`

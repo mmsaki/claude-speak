@@ -111,34 +111,17 @@ def reverb(buf, wet=0.2):
 
 # --- cue definitions (event, voices, reverb wet, distortion) -----------------
 # voice tuple: (offset_s, osc, note, gain, note_value, (a,d,s,r))
-A = (0.02, 0.3, 0.1, 1.2)
 CUES = {
-    # wired to hooks:
+    # only the cues actually wired to events (see scripts/event.sh)
     "send":     ([(0.0, "sine", "C5", 0.30, "32n", (0.002,0.06,0,0.06)),
                   (0.05,"sine", "G5", 0.30, "32n", (0.002,0.06,0,0.06))], 0.18, False),
     "tick":     ([(0.0, "sine", "G4", 0.25, "32n", (0.002,0.08,0,0.10))], 0.15, False),
-    "notify":   ([(0.0, "triangle","C5",0.40,"16n",(0.005,0.25,0.1,0.4)),
-                  (0.12,"triangle","E5",0.40,"16n",(0.005,0.25,0.1,0.4))], 0.25, False),
-    "success":  ([(0.0, "triangle","C4",0.50,"4n",A),
-                  (0.0, "triangle","E4",0.50,"4n",A),
-                  (0.0, "triangle","G4",0.50,"4n",A)], 0.30, False),
     "failure":  ([(0.0, "sawtooth","D2",0.65,"4n",(0.02,0.4,0.1,0.8))], 0.25, False),
-    "done":     ([(0.0, "square4","C5",0.35,"8n",(0.005,0.12,0.05,0.25))], 0.22, False),
     "reset":    ([(0.0, "sine","G3",0.55,"16n",(0.004,0.18,0,0.12)),
                   (0.1, "sine","C3",0.55,"16n",(0.004,0.18,0,0.12))], 0.22, False),
-    # extra palette (not wired by default, available via `cue.sh <name>`):
-    "interrupted":([(0.0,"triangle","C5",0.6,"32n",(0.001,0.08,0,0.04)),
-                    (0.07,"triangle","E5",0.6,"32n",(0.001,0.08,0,0.04))], 0.2, False),
     "running":  ([(0.0,"sine","E4",0.25,"32n",(0.002,0.08,0,0.1))], 0.2, False),
-    "config":   ([(0.0,"triangle","G5",0.6,"16n",(0.001,0.05,0,0.05))], 0.2, False),
     "permission":([(0.0, "triangle","G5",0.6,"16n",(0.001,0.05,0,0.05)),
                   (0.16,"triangle","G5",0.6,"16n",(0.001,0.05,0,0.05))], 0.2, False),
-    "blip":     ([(0.0,"sine","E6",0.35,"64n",(0.001,0.04,0,0.04))], 0.2, False),
-    "copied":   ([(0.0,"triangle","E5",0.5,"16n",(0.002,0.15,0.05,0.3)),
-                  (0.08,"triangle","G5",0.5,"16n",(0.002,0.15,0.05,0.3))], 0.25, False),
-    "hover":    ([(0.0,"sine","G6",0.2,"64n",(0.001,0.03,0,0.02))], 0.2, False),
-    "death":    ([(0.0,"fatsaw","D#3",0.45,"32n",(0.01,0.5,0.3,1.5)),
-                  (0.1,"fatsaw","C1",0.55,"1n",(0.01,0.5,0.3,1.5))], 0.0, True),
 }
 
 def render(name, spec, out_dir):

@@ -197,8 +197,6 @@ pub fn renderCue(alloc: std.mem.Allocator, io: std.Io, cue: Cue, out_path: []con
     try std.Io.Dir.cwd().writeFile(io, .{ .sub_path = out_path, .data = bytes });
 }
 
-const A: Env = .{ .a = 0.02, .d = 0.3, .s = 0.1, .r = 1.2 };
-
 pub const cues = [_]Cue{
     .{ .name = "send", .wet = 0.18, .voices = &.{
         .{ .off = 0.0, .osc = .sine, .note = "C5", .gain = 0.30, .n = 32, .env = .{ .a = 0.002, .d = 0.06, .s = 0, .r = 0.06 } },
@@ -220,14 +218,6 @@ pub const cues = [_]Cue{
     } },
     .{ .name = "failure", .wet = 0.25, .voices = &.{
         .{ .off = 0.0, .osc = .sawtooth, .note = "D2", .gain = 0.65, .n = 4, .env = .{ .a = 0.02, .d = 0.4, .s = 0.1, .r = 0.8 } },
-    } },
-    .{ .name = "done", .wet = 0.22, .voices = &.{
-        .{ .off = 0.0, .osc = .square4, .note = "C5", .gain = 0.35, .n = 8, .env = .{ .a = 0.005, .d = 0.12, .s = 0.05, .r = 0.25 } },
-    } },
-    .{ .name = "success", .wet = 0.30, .voices = &.{
-        .{ .off = 0.0, .osc = .triangle, .note = "C4", .gain = 0.50, .n = 4, .env = A },
-        .{ .off = 0.0, .osc = .triangle, .note = "E4", .gain = 0.50, .n = 4, .env = A },
-        .{ .off = 0.0, .osc = .triangle, .note = "G4", .gain = 0.50, .n = 4, .env = A },
     } },
 };
 
