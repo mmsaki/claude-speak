@@ -1,7 +1,7 @@
 {
   "name": "claude-speak",
   "description": "Hear Claude: spoken responses (TTS), procedural sound cues, and per-session queue with skip/replay controls.",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "author": { "name": "Meek Msaki", "email": "meek.dev3@gmail.com" },
   "homepage": "https://github.com/mmsaki/claude-speak",
   "repository": "https://github.com/mmsaki/claude-speak",

@@ -65,14 +65,36 @@ with the native binary.
 
 ## Commands
 
-### Slash commands (in Claude Code)
+### Real-time control — global hotkeys (skhd)
+
+Live controls run through a global hotkey daemon so they're **instant** and work
+while you're typing in Claude. (Slash commands route through the agent's turn
+loop, so they lag by seconds — they were removed for playback control.) One-time
+setup:
+
+```bash
+brew install koekeishiya/formulae/skhd
+skhd --start-service
+# then grant Accessibility permission: System Settings → Privacy & Security → Accessibility → skhd
+```
+
+Default bindings (`~/.config/skhd/skhdrc` — edit to taste):
+
+| Hotkey | Action |
+| --- | --- |
+| ⌥⌘ → / ← | next / prev |
+| ⌥⌘ R | replay |
+| ⌥⌘ M | mute toggle |
+| ⌥⌘ space | pause / resume |
+
+No global daemon? Run `claude-speak keys` in a second terminal for the same keys.
+
+### Slash commands (info / settings)
+
+These are fine through the agent loop — latency doesn't matter for them:
 
 | Command | Action |
 | --- | --- |
-| `/claude-speak:next` · `:prev` | skip forward / back one segment |
-| `/claude-speak:replay` | replay the current segment |
-| `/claude-speak:stop` · `:play` | pause / resume |
-| `/claude-speak:mute` | toggle mute (voice off, cues stay; stays at the live edge) |
 | `/claude-speak:voice <name>` | switch voice |
 | `/claude-speak:voices` | list available voices |
 | `/claude-speak:list` | show the queue |
