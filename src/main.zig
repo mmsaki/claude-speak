@@ -40,4 +40,5 @@ fn usage() void {
 test {
     _ = @import("clean.zig");
     _ = @import("synth_wav.zig");
+    _ = @import("payload.zig");
 }
