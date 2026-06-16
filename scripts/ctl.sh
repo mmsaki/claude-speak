@@ -40,6 +40,11 @@ if [ "$cmd" = "engine" ]; then
 fi
 
 if [ "$cmd" = "voices" ] || [ "$cmd" = "voice" ]; then
+  # common mix-up: `voice say` -> they meant to switch the engine
+  case "$cmd:$arg" in
+    voice:say|voice:openai|voice:elevenlabs)
+      echo "claude-speak: '$arg' is an engine, not a voice. Did you mean:  claude-speak engine $arg"; exit 1 ;;
+  esac
   cur=$(cat "$tgt/voice" 2>/dev/null || cat "$CS_HOME/voice" 2>/dev/null)
 
   # macOS `say` has its own voice namespace (Samantha, Alex, Daniel, ...).
