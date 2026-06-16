@@ -15,7 +15,10 @@ cmdq="$sd/cmdq"; : > "$cmdq"
 [ -p "$fifo" ] || { rm -f "$fifo"; mkfifo "$fifo"; }
 PLAY="${CLAUDE_TTS_PLAY_CMD:-/usr/bin/afplay}"
 
-pos=$(cat "$sd/pos" 2>/dev/null || echo 1)
+pos=$(cat "$sd/pos" 2>/dev/null)
+# missing/invalid pos (e.g. respawn after the pos file was cleared) -> start at
+# the live edge so we don't replay the backlog.
+case "$pos" in '' | *[!0-9]*) pos=$(( $(cs_seg_count "$sd") + 1 )) ;; esac
 paused=0; INT=0; apid=""
 last_active=$SECONDS   # for idle self-exit (abandoned sessions)
 muted=0; [ -f "$sd/muted" ] && muted=1

@@ -193,6 +193,8 @@ cs_ensure_player() { # $1 = session dir
   local sd="$1"
   cs_player_alive "$sd" && return 0
   local lk="$sd/player.start.lock"
+  # clear a stale start lock (spawn takes <1s; older means the spawner crashed)
+  [ -d "$lk" ] && [ -n "$(find "$lk" -maxdepth 0 -mmin +1 2>/dev/null)" ] && rmdir "$lk" 2>/dev/null
   mkdir "$lk" 2>/dev/null || return 0
   nohup bash "$CS_DIR/player.sh" "$sd" >>"$sd/player.log" 2>&1 &
   echo $! > "$sd/player.pid"
