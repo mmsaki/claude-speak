@@ -41,4 +41,5 @@ test {
     _ = @import("clean.zig");
     _ = @import("synth_wav.zig");
     _ = @import("payload.zig");
+    _ = @import("config.zig");
 }
