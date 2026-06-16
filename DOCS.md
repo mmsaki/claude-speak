@@ -127,8 +127,8 @@ terminal: `n`/`→` next · `p`/`←` prev · `r` replay · `space` pause · `q`
 
 ## Voices
 
-Engine is auto-detected: **ElevenLabs → OpenAI → macOS `say`** (whichever key is
-present). Switch any time:
+Default engine is **macOS `say`** (zero-config, no key, no cost). Opt into
+ElevenLabs or OpenAI explicitly (they need a key). Switch any time:
 
 ```bash
 claude-speak engine say          # or openai / elevenlabs
@@ -165,8 +165,8 @@ by every hook); environment variables override the file. Copy
 | `CLAUDE_TTS` | `1` | speak replies (0 = off) |
 | `CLAUDE_CUES` | `1` | sound cues (0 = off) |
 | `CLAUDE_HAPTICS` | `0` | trackpad haptics (experimental) |
-| `CLAUDE_TTS_ENGINE` | auto | `elevenlabs` · `openai` · `say` |
-| `CLAUDE_TTS_VOICE` | Rachel | voice name/id for the engine |
+| `CLAUDE_TTS_ENGINE` | `say` | `say` (default) · `elevenlabs` · `openai` |
+| `CLAUDE_TTS_VOICE` | engine default | voice name/id for the engine |
 | `CLAUDE_TTS_MODEL` | `eleven_turbo_v2_5` | TTS model |
 | `CLAUDE_TTS_SPEED` | `1.0` | ElevenLabs speed 0.7–1.2 (pitch-preserving) |
 | `CLAUDE_TTS_RATE` | — | extra `afplay -r` speedup (raises pitch) |

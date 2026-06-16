@@ -20,13 +20,15 @@ works — so you can *listen* to a long session instead of watching the terminal
 /plugin install claude-speak@mmsaki
 ```
 
-Restart Claude Code — that's it. It speaks with the built-in macOS voice out of the box.
+Restart Claude Code — that's it. It speaks with the built-in **macOS voice** out
+of the box (no API key, no cost).
 
-**For the best voice** (optional), drop in an API key:
+**Want premium voices?** (optional) Add a key, then switch the engine:
 
 ```bash
 printf 'YOUR_ELEVENLABS_KEY' > ~/.claude/.elevenlabs_key && chmod 600 ~/.claude/.elevenlabs_key
-# (OpenAI works too, via ~/.claude/.openai_key)
+# then, in Claude:   /claude-speak:engine elevenlabs
+# (OpenAI works too: ~/.claude/.openai_key + /claude-speak:engine openai)
 ```
 
 ## Commands

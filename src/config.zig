@@ -69,12 +69,12 @@ pub fn load(arena: std.mem.Allocator, io: std.Io, environ: std.process.Environ, 
 
 /// Resolve the TTS engine: explicit override, else key-file/env autodetect.
 pub fn engine(cfg: Config, has_elevenlabs: bool, has_openai: bool) []const u8 {
+    _ = has_elevenlabs;
+    _ = has_openai;
     if (cfg.get("CLAUDE_TTS_ENGINE")) |e| {
         if (e.len > 0) return e;
     }
-    if (has_elevenlabs) return "elevenlabs";
-    if (has_openai) return "openai";
-    return "say";
+    return "say"; // zero-config default; premium engines are explicit opt-in
 }
 
 test "parse config: export, comments, quotes, override" {
@@ -97,14 +97,14 @@ test "parse config: export, comments, quotes, override" {
     try std.testing.expect(map.get("missing") == null);
 }
 
-test "engine autodetect order" {
+test "engine defaults to say without an override" {
     const a = std.testing.allocator;
     var arena = std.heap.ArenaAllocator.init(a);
     defer arena.deinit();
     var map: std.StringHashMapUnmanaged([]const u8) = .empty;
     const cfg = Config{ .map = map, .environ = .{ .block = .{ .slice = &.{} } } };
-    try std.testing.expectEqualStrings("elevenlabs", engine(cfg, true, true));
-    try std.testing.expectEqualStrings("openai", engine(cfg, false, true));
+    // no config/env override -> say, regardless of which keys are present
+    try std.testing.expectEqualStrings("say", engine(cfg, true, true));
     try std.testing.expectEqualStrings("say", engine(cfg, false, false));
     _ = &map;
 }

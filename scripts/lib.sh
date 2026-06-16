@@ -28,10 +28,10 @@ cs_key() { # $1 = openai|elevenlabs -> prints key or nothing
 
 cs_engine() {  # optional $1 = session dir for a per-session override
   [ -n "${1:-}" ] && [ -s "$1/engine" ] && { tr -d '[:space:]' < "$1/engine"; return; }  # per-session
-  [ -s "$CS_HOME/engine" ] && { tr -d '[:space:]' < "$CS_HOME/engine"; return; }          # global default
-  if [ -n "${CLAUDE_TTS_ENGINE:-}" ]; then printf '%s' "$CLAUDE_TTS_ENGINE"; return; fi
-  if cs_have_key elevenlabs; then printf 'elevenlabs'; return; fi
-  if cs_have_key openai;     then printf 'openai';     return; fi
+  [ -s "$CS_HOME/engine" ] && { tr -d '[:space:]' < "$CS_HOME/engine"; return; }          # global override
+  if [ -n "${CLAUDE_TTS_ENGINE:-}" ]; then printf '%s' "$CLAUDE_TTS_ENGINE"; return; fi   # config/env
+  # Default to macOS `say`: zero-config, no API key, no cost. Premium engines
+  # (ElevenLabs/OpenAI) are explicit opt-in via `claude-speak engine ...` or config.
   printf 'say'
 }
 
