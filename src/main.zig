@@ -22,7 +22,7 @@ pub fn main(init: std.process.Init.Minimal) !void {
     const cmd = it.next() orelse return usage();
 
     if (std.mem.eql(u8, cmd, "version")) {
-        std.debug.print("claude-speak 0.2.0-dev (zig)\n", .{});
+        std.debug.print("claude-speak 0.5.0 (zig)\n", .{});
         return;
     }
 
