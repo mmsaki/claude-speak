@@ -7,10 +7,18 @@ const std = @import("std");
 const clean = @import("clean.zig");
 const synth = @import("synth_wav.zig");
 const tts = @import("tts.zig");
+const daemon = @import("daemon.zig");
+const hooks = @import("hooks.zig");
+
+const ctl_cmds = [_][]const u8{
+    "next", "prev", "replay", "last", "rprev", "rnext", "goto",
+    "pause", "resume", "toggle", "stop", "mute", "unmute", "mutetoggle",
+    "clear", "quit", "voice",
+};
 
 pub fn main(init: std.process.Init.Minimal) !void {
     var it = init.args.iterate();
-    _ = it.next(); // program name
+    const exe = it.next() orelse return usage(); // program path (for spawning the daemon)
     const cmd = it.next() orelse return usage();
 
     if (std.mem.eql(u8, cmd, "version")) {
@@ -18,11 +26,47 @@ pub fn main(init: std.process.Init.Minimal) !void {
         return;
     }
 
+    if (std.mem.eql(u8, cmd, "player")) {
+        const session = it.next() orelse return usage();
+        var gpa: std.heap.DebugAllocator(.{}) = .init;
+        defer _ = gpa.deinit();
+        var threaded: std.Io.Threaded = .init(gpa.allocator(), .{ .environ = init.environ });
+        defer threaded.deinit();
+        try daemon.run(gpa.allocator(), threaded.io(), init.environ, session);
+        return;
+    }
+
+    if (std.mem.eql(u8, cmd, "hook")) {
+        const event = it.next() orelse return usage();
+        var gpa: std.heap.DebugAllocator(.{}) = .init;
+        defer _ = gpa.deinit();
+        const alloc = gpa.allocator();
+        var threaded: std.Io.Threaded = .init(alloc, .{ .environ = init.environ });
+        defer threaded.deinit();
+        const io = threaded.io();
+        const payload_bytes = std.Io.Dir.cwd().readFileAlloc(io, "/dev/stdin", alloc, .limited(64 << 20)) catch "";
+        defer alloc.free(payload_bytes);
+        try hooks.hook(alloc, io, init.environ, exe, event, payload_bytes);
+        return;
+    }
+
+    for (ctl_cmds) |c| {
+        if (std.mem.eql(u8, cmd, c)) {
+            const arg = it.next();
+            var gpa: std.heap.DebugAllocator(.{}) = .init;
+            defer _ = gpa.deinit();
+            var threaded: std.Io.Threaded = .init(gpa.allocator(), .{ .environ = init.environ });
+            defer threaded.deinit();
+            try hooks.ctl(gpa.allocator(), threaded.io(), init.environ, exe, cmd, arg);
+            return;
+        }
+    }
+
     if (std.mem.eql(u8, cmd, "cues")) {
         const dir = it.next() orelse return usage();
         var gpa: std.heap.DebugAllocator(.{}) = .init;
         defer _ = gpa.deinit();
-        var threaded: std.Io.Threaded = .init(gpa.allocator(), .{});
+        var threaded: std.Io.Threaded = .init(gpa.allocator(), .{ .environ = init.environ });
         defer threaded.deinit();
         try synth.renderAll(gpa.allocator(), threaded.io(), dir);
         std.debug.print("rendered {d} cues -> {s}\n", .{ synth.cues.len, dir });
@@ -36,7 +80,7 @@ pub fn main(init: std.process.Init.Minimal) !void {
         var gpa: std.heap.DebugAllocator(.{}) = .init;
         defer _ = gpa.deinit();
         const alloc = gpa.allocator();
-        var threaded: std.Io.Threaded = .init(alloc, .{});
+        var threaded: std.Io.Threaded = .init(alloc, .{ .environ = init.environ });
         defer threaded.deinit();
         const io = threaded.io();
         // key: $ELEVENLABS_API_KEY, else ~/.claude/.elevenlabs_key
@@ -74,4 +118,6 @@ test {
     _ = @import("tts.zig");
     _ = @import("audio.zig");
     _ = @import("queue.zig");
+    _ = @import("ipc.zig");
+    _ = @import("daemon.zig");
 }
