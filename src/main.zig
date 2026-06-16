@@ -5,6 +5,7 @@
 //!   <ctl-cmd> [arg]     control the player (next/prev/replay/mute/voice/...)
 const std = @import("std");
 const clean = @import("clean.zig");
+const synth = @import("synth_wav.zig");
 
 pub fn main(init: std.process.Init.Minimal) !void {
     var it = init.args.iterate();
@@ -13,6 +14,17 @@ pub fn main(init: std.process.Init.Minimal) !void {
 
     if (std.mem.eql(u8, cmd, "version")) {
         std.debug.print("claude-speak 0.2.0-dev (zig)\n", .{});
+        return;
+    }
+
+    if (std.mem.eql(u8, cmd, "cues")) {
+        const dir = it.next() orelse return usage();
+        var gpa: std.heap.DebugAllocator(.{}) = .init;
+        defer _ = gpa.deinit();
+        var threaded: std.Io.Threaded = .init(gpa.allocator(), .{});
+        defer threaded.deinit();
+        try synth.renderAll(gpa.allocator(), threaded.io(), dir);
+        std.debug.print("rendered {d} cues -> {s}\n", .{ synth.cues.len, dir });
         return;
     }
 
@@ -27,4 +39,5 @@ fn usage() void {
 
 test {
     _ = @import("clean.zig");
+    _ = @import("synth_wav.zig");
 }
