@@ -42,8 +42,13 @@ if [ -n "$new" ] && printf '%s' "$new" | grep -q '[^[:space:]]'; then
     echo "$idx" >> "$sd/responses"; rm -f "$sd/resp_pending"
   fi
   rmdir "$ilock" 2>/dev/null || true
-  # NOTE: no synthesis here — the player synthesizes on demand at playback time,
-  # so segments that get skipped/muted/never-reached never hit the TTS API.
+  # Eager background synth: read each chunk the moment it's written (in parallel
+  # with the rest of the turn still running), instead of waiting at playback.
+  # CLAUDE_TTS_EAGER=0 reverts to on-demand (cheaper — the player then
+  # synthesizes only the segments it actually plays).
+  if [ "${CLAUDE_TTS_EAGER:-1}" = "1" ]; then
+    ( cat "$txt" | bash "$CS_DIR/synth.sh" "${txt%.txt}" ) >/dev/null 2>&1 &
+  fi
 fi
 
 cs_ensure_player "$sd"
@@ -52,12 +57,6 @@ cs_ensure_player "$sd"
 if [ -n "${CLAUDE_TTS_MAX_LAG:-}" ] && [ -f "$sd/player.pid" ]; then
   ppos=$(cat "$sd/pos" 2>/dev/null || echo 1); tot=$(cs_seg_count "$sd")
   [ $((tot - ppos)) -gt "$CLAUDE_TTS_MAX_LAG" ] && kill -USR1 "$(cat "$sd/player.pid")" 2>/dev/null || true
-fi
-
-# Eager-synthesize the final (Stop) answer so it reads promptly on arrival;
-# intermediate PreToolUse segments stay on-demand (skipped ones cost nothing).
-if [ "$mode" = stop ] && [ -n "${txt:-}" ] && [ -f "$txt" ] && [ -z "$(cs_seg_audio "$sd" "$idx")" ]; then
-  ( cat "$txt" | bash "$CS_DIR/synth.sh" "${txt%.txt}" ) >/dev/null 2>&1 &
 fi
 
 [ "$mode" = stop ] && : > "$sd/resp_pending"    # next turn starts a new response
