@@ -149,7 +149,7 @@ pub fn hook(
     } else if (std.mem.eql(u8, event, "notify")) {
         if (cues_on) playCue(io, gpa, home, "permission");
     } else if (std.mem.eql(u8, event, "stop")) {
-        if (cues_on) playCue(io, gpa, home, "reset");
+        // no cue on reply-finish — reset is reserved for exit (sessionend)
         if (p.transcript_path) |t| enqueueNewProse(io, gpa, cfg, exe, session_dir, t, true);
     } else if (std.mem.eql(u8, event, "subagentstop")) {
         if (cues_on) playCue(io, gpa, home, "running");

@@ -26,7 +26,7 @@ case "$ev" in
       (if (.tool_response.is_error? // false) then "err" else empty end)' 2>/dev/null | head -1)
     [ -n "$err" ] && { cue failure; hap heavy; } ;;
   notify)       cue permission; hap medium ;;
-  stop)         cue reset; hap medium; voice stop ;;
+  stop)         hap medium; voice stop ;;   # no cue — reset is reserved for exit
   subagentstop) cue running ;;
   sessionend)
     sid=$(printf '%s' "$payload" | /usr/bin/jq -r '.session_id // empty')
@@ -46,6 +46,12 @@ case "$ev" in
       sd=$(cs_session_dir "$sid"); mkdir -p "$sd/segs"
       printf '%s' "$sd" > "$CS_HOME/current"             # controls resolve immediately
       : > "$sd/resp_pending"
+      # Prime the cursor to the end of the existing transcript so we only read
+      # NEW messages — never replay the backlog on resume/continue.
+      tx=$(printf '%s' "$payload" | /usr/bin/jq -r '.transcript_path // empty')
+      if [ -f "$tx" ]; then
+        primed=$(cs_assistant_prose "$tx"); printf '%s' "${#primed}" > "$sd/cursor"
+      fi
     fi
     mkdir -p "$CS_HOME/bin"
     ln -sf "$CS_DIR/ctl.sh" "$CS_HOME/bin/claude-speak"   # stable CLI path
