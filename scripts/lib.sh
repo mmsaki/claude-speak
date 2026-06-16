@@ -86,7 +86,13 @@ cs_enqueue_new() {  # $1 sd  $2 transcript  $3 mark_boundary
   printf '%s' "$L" > "$sd/cursor"
   rmdir "$lock" 2>/dev/null || true
 
-  delta=$(printf '%s' "$delta" | tr '\n' ' ' | /usr/bin/sed -E 's/[[:space:]]+/ /g; s/^ //; s/ $//')
+  # Drop meta non-responses the assistant emits on no-op turns (e.g. after the
+  # user runs a slash command) — they're real transcript messages but nothing
+  # to speak. Extend via CLAUDE_TTS_SKIP_RE (extended-regex, '|'-separated).
+  local skip_re='No response requested\.?'
+  [ -n "${CLAUDE_TTS_SKIP_RE:-}" ] && skip_re="$skip_re|$CLAUDE_TTS_SKIP_RE"
+  delta=$(printf '%s' "$delta" | tr '\n' ' ' \
+        | /usr/bin/sed -E "s/$skip_re//g; s/[[:space:]]+/ /g; s/^ //; s/ \$//")
   printf '%s' "$delta" | grep -q '[^[:space:]]' || return 1
 
   local max="${CLAUDE_TTS_MAXCHARS:-1500}" first=1 chunk rest ilock idx txt m
