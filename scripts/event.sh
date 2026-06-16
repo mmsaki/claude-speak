@@ -25,7 +25,11 @@ case "$ev" in
       (.tool_response.error? // empty),
       (if (.tool_response.is_error? // false) then "err" else empty end)' 2>/dev/null | head -1)
     [ -n "$err" ] && { cue failure; hap heavy; } ;;
-  notify)       cue permission; hap medium ;;
+  notify)
+    # The Notification hook also fires for idle "waiting for your input" nudges —
+    # only chime for actual permission requests, not those.
+    msg=$(printf '%s' "$payload" | /usr/bin/jq -r '.message // empty')
+    printf '%s' "$msg" | grep -qi 'permission' && { cue permission; hap medium; } ;;
   stop)         hap medium; voice stop ;;   # no cue — reset is reserved for exit
   subagentstop) cue running ;;
   sessionend)
