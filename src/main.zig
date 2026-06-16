@@ -73,4 +73,5 @@ test {
     _ = @import("config.zig");
     _ = @import("tts.zig");
     _ = @import("audio.zig");
+    _ = @import("queue.zig");
 }
