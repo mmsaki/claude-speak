@@ -29,6 +29,24 @@ cmd="${1:-status}"; arg="${2:-}"
 tgt="${CLAUDE_SPEAK_SESSION:-$(cat "$CS_HOME/current" 2>/dev/null)}"
 [ -n "$tgt" ] && [ -d "$tgt" ] || tgt="$CS_HOME"
 
+# Enable/disable narration (voice) or sound cues — for "sounds only" or
+# "voice only" modes. `voice` is per-session, `cues` global.
+if [ "$cmd" = "cues" ]; then
+  case "$arg" in
+    off) : > "$CS_HOME/cues_off"; echo "claude-speak: cues OFF" ;;
+    on)  rm -f "$CS_HOME/cues_off"; echo "claude-speak: cues ON" ;;
+    "")  [ -f "$CS_HOME/cues_off" ] && echo "cues: off" || echo "cues: on" ;;
+    *)   echo "usage: claude-speak cues on|off" ;;
+  esac
+  exit 0
+fi
+if [ "$cmd" = "voice" ]; then
+  case "$arg" in
+    off) : > "$tgt/voice_off"; echo "claude-speak: voice OFF — sounds only (this session)"; exit 0 ;;
+    on)  rm -f "$tgt/voice_off"; echo "claude-speak: voice ON (this session)"; exit 0 ;;
+  esac
+fi
+
 if [ "$cmd" = "engine" ]; then
   case "$arg" in
     say|openai|elevenlabs) printf '%s' "$arg" > "$tgt/engine"

@@ -4,7 +4,6 @@
 # Enqueues newly-written cleaned prose as audio segments (chunked, never dropped).
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; . "$DIR/lib.sh"
-[ "${CLAUDE_TTS:-1}" = "0" ] && exit 0
 
 mode="${1:-step}"
 payload=$(cat)
@@ -14,6 +13,7 @@ sid=$(printf '%s' "$payload" | /usr/bin/jq -r '.session_id // empty')
 [ -n "$sid" ] || sid=$(printf '%s' "$transcript" | /usr/bin/shasum | cut -d' ' -f1)
 
 sd=$(cs_session_dir "$sid"); mkdir -p "$sd/segs"
+cs_voice_on "$sd" || exit 0     # voice off (sounds-only mode) -> don't narrate
 printf '%s' "$sd" > "$CS_HOME/current"          # newest active session (for the CLI)
 
 cs_enqueue_new "$sd" "$transcript" 1 || true

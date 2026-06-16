@@ -95,6 +95,9 @@ These are fine through the agent loop — latency doesn't matter for them:
 | Command | Action |
 | --- | --- |
 | `/claude-speak:voice <name>` | switch voice |
+| `/claude-speak:voice on` · `off` | narration on / off (**off = sounds-only mode**) |
+| `/claude-speak:cues on` · `off` | sound cues on / off (**off = voice-only mode**) |
+| `/claude-speak:engine <say\|openai\|elevenlabs>` | switch engine |
 | `/claude-speak:voices` | list available voices |
 | `/claude-speak:list` | show the queue |
 

@@ -3,7 +3,7 @@
 # Disable all cues with: export CLAUDE_CUES=0
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; . "$DIR/lib.sh"
-[ "${CLAUDE_CUES:-1}" = "0" ] && exit 0
+cs_cues_on || exit 0
 
 name="${1:-}"; [ -n "$name" ] || exit 0
 sounds="$CS_HOME/sounds"

@@ -35,6 +35,20 @@ cs_engine() {  # optional $1 = session dir for a per-session override
   printf 'say'
 }
 
+# Whether to speak / play cues. Runtime flag files (voice off|on, cues off|on)
+# override the config; voice is per-session (flag in the session dir), cues global.
+cs_voice_on() {  # $1 = session dir (optional)
+  [ -n "${1:-}" ] && [ -f "$1/voice_off" ] && return 1
+  [ -f "$CS_HOME/voice_off" ] && return 1
+  [ "${CLAUDE_TTS:-1}" = "0" ] && return 1
+  return 0
+}
+cs_cues_on() {
+  [ -f "$CS_HOME/cues_off" ] && return 1
+  [ "${CLAUDE_CUES:-1}" = "0" ] && return 1
+  return 0
+}
+
 # --- session paths ---------------------------------------------------------
 cs_session_dir() { printf '%s/%s' "$CS_HOME" "${1:-default}"; }
 
