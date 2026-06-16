@@ -43,4 +43,4 @@ printf 'YOUR_ELEVENLABS_KEY' > ~/.claude/.elevenlabs_key && chmod 600 ~/.claude/
 
 ---
 
-macOS · MIT · [report an issue](https://github.com/mmsaki/claude-speak/issues)
+macOS · MIT · [full docs](DOCS.md) · [report an issue](https://github.com/mmsaki/claude-speak/issues)
