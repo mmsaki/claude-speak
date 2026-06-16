@@ -125,11 +125,16 @@ cs_static_voice_id() {  # $1 = name or id -> prints id
     BEGIN{ql=tolower(q)} tolower($1)==ql || $2==q {print $2; exit}'
 }
 
-cs_prune_sessions() {   # remove finished sessions (dead player, >60min idle)
+cs_prune_sessions() {   # remove finished sessions
   for d in "$CS_HOME"/*/; do
-    [ -d "${d}segs" ] || continue
     cs_player_alive "$d" && continue
-    [ -n "$(find "$d" -maxdepth 0 -mmin +60 2>/dev/null)" ] && rm -rf "$d"
+    if [ -d "${d}segs" ]; then
+      # active session with audio: prune if idle >60min
+      [ -n "$(find "$d" -maxdepth 0 -mmin +60 2>/dev/null)" ] && rm -rf "$d"
+    else
+      # metadata-only (cursor preserved after exit for resume): prune >7 days
+      [ -n "$(find "$d" -maxdepth 0 -mmin +10080 2>/dev/null)" ] && rm -rf "$d"
+    fi
   done
 }
 

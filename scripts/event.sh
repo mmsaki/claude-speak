@@ -37,7 +37,10 @@ case "$ev" in
       pkill -f "player.sh $sd" 2>/dev/null
       pkill -f "afplay $sd/" 2>/dev/null
       cue reset                      # goodbye sound on exit
-      rm -rf "$sd"
+      # Clean audio/transient but KEEP the cursor so a resume reads only NEW
+      # messages (deleting it made resume replay the whole transcript).
+      rm -rf "$sd/segs" "$sd/control" "$sd/cmdq" "$sd/player.pid" \
+             "$sd/player.log" "$sd/pos" "$sd/responses" "$sd/resp_pending" "$sd/voice.lock" 2>/dev/null
     fi ;;
   sessionstart)
     cs_prune_sessions                                   # sweep dead sessions
