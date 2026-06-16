@@ -15,7 +15,12 @@
 #   quit               stop the player daemon
 # Targets the most recently active session; override with CLAUDE_SPEAK_SESSION=<dir>.
 set -uo pipefail
-DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; . "$DIR/lib.sh"
+# Resolve through the bin/ symlink so we find lib.sh next to the real script.
+SELF="${BASH_SOURCE[0]}"
+while [ -L "$SELF" ]; do
+  t="$(readlink "$SELF")"; case "$t" in /*) SELF="$t" ;; *) SELF="$(dirname "$SELF")/$t" ;; esac
+done
+DIR="$(cd "$(dirname "$SELF")" && pwd)"; . "$DIR/lib.sh"
 
 cmd="${1:-status}"; arg="${2:-}"
 
