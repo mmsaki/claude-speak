@@ -54,5 +54,11 @@ if [ -n "${CLAUDE_TTS_MAX_LAG:-}" ] && [ -f "$sd/player.pid" ]; then
   [ $((tot - ppos)) -gt "$CLAUDE_TTS_MAX_LAG" ] && kill -USR1 "$(cat "$sd/player.pid")" 2>/dev/null || true
 fi
 
+# Eager-synthesize the final (Stop) answer so it reads promptly on arrival;
+# intermediate PreToolUse segments stay on-demand (skipped ones cost nothing).
+if [ "$mode" = stop ] && [ -n "${txt:-}" ] && [ -f "$txt" ] && [ -z "$(cs_seg_audio "$sd" "$idx")" ]; then
+  ( cat "$txt" | bash "$CS_DIR/synth.sh" "${txt%.txt}" ) >/dev/null 2>&1 &
+fi
+
 [ "$mode" = stop ] && : > "$sd/resp_pending"    # next turn starts a new response
 exit 0
