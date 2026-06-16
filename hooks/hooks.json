@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      { "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PLUGIN_ROOT/scripts/event.sh\" userprompt" } ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PLUGIN_ROOT/scripts/event.sh\" pretool" } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "*", "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PLUGIN_ROOT/scripts/event.sh\" posttool" } ] }
+    ],
+    "Notification": [
+      { "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PLUGIN_ROOT/scripts/event.sh\" notify" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PLUGIN_ROOT/scripts/event.sh\" stop" } ] }
+    ],
+    "SubagentStop": [
+      { "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PLUGIN_ROOT/scripts/event.sh\" subagentstop" } ] }
+    ],
+    "SessionStart": [
+      { "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PLUGIN_ROOT/scripts/event.sh\" sessionstart" } ] }
+    ],
+    "SessionEnd": [
+      { "hooks": [ { "type": "command", "command": "bash \"$CLAUDE_PLUGIN_ROOT/scripts/event.sh\" sessionend" } ] }
+    ]
+  }
+}

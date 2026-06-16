@@ -1,0 +1,12 @@
+{
+  "name": "mmsaki",
+  "owner": { "name": "Meek Msaki", "email": "meek.dev3@gmail.com" },
+  "description": "Meek's Claude Code plugins.",
+  "plugins": [
+    {
+      "name": "claude-speak",
+      "source": ".",
+      "description": "Hear Claude: TTS + procedural sound cues + per-session queue with skip/replay and key controls."
+    }
+  ]
+}
