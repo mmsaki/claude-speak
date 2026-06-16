@@ -137,6 +137,11 @@ claude-speak voices              # lists voices for the current engine
 claude-speak voice Daniel        # for `say`, a macOS voice name; for ElevenLabs, a name/id
 ```
 
+**Voice and engine are per-session** — each Claude session keeps its own
+(`<session>/voice`, `<session>/engine`), so you can run Rachel in one window and
+Daniel in another. They fall back to a global default in
+`~/.claude/claude-speak/voice` / `engine` when a session hasn't set one.
+
 Keys live in `chmod 600` files:
 
 ```bash

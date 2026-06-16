@@ -24,27 +24,32 @@ DIR="$(cd "$(dirname "$SELF")" && pwd)"; . "$DIR/lib.sh"
 
 cmd="${1:-status}"; arg="${2:-}"
 
+# Session this command applies to: the current session (so voice/engine are
+# PER-SESSION), falling back to the global default if there's no session yet.
+tgt="${CLAUDE_SPEAK_SESSION:-$(cat "$CS_HOME/current" 2>/dev/null)}"
+[ -n "$tgt" ] && [ -d "$tgt" ] || tgt="$CS_HOME"
+
 if [ "$cmd" = "engine" ]; then
   case "$arg" in
-    say|openai|elevenlabs) printf '%s' "$arg" > "$CS_HOME/engine"
-      echo "claude-speak: engine -> $arg (applies to the next spoken segment)" ;;
-    "") echo "engine: $(cs_engine)" ;;
+    say|openai|elevenlabs) printf '%s' "$arg" > "$tgt/engine"
+      echo "claude-speak: engine -> $arg (this session, next spoken segment)" ;;
+    "") echo "engine: $(cs_engine "$tgt")" ;;
     *)  echo "claude-speak: unknown engine '$arg' (use say | openai | elevenlabs)"; exit 1 ;;
   esac
   exit 0
 fi
 
 if [ "$cmd" = "voices" ] || [ "$cmd" = "voice" ]; then
-  cur=$(cat "$CS_HOME/voice" 2>/dev/null)
+  cur=$(cat "$tgt/voice" 2>/dev/null || cat "$CS_HOME/voice" 2>/dev/null)
 
   # macOS `say` has its own voice namespace (Samantha, Alex, Daniel, ...).
-  if [ "$(cs_engine)" = "say" ]; then
+  if [ "$(cs_engine "$tgt")" = "say" ]; then
     if [ "$cmd" = "voices" ]; then
       echo "macOS say voices ( * = current ) — claude-speak voice <name>:"
       /usr/bin/say -v '?' | /usr/bin/awk -v c="$cur" '{m=($1==c)?"* ":"  "; printf "%s%-16s %s\n", m, $1, $2}'
     else
       [ -n "$arg" ] || { echo "usage: claude-speak voice <name>"; exit 1; }
-      printf '%s' "$arg" > "$CS_HOME/voice"; echo "claude-speak: voice -> $arg"
+      printf '%s' "$arg" > "$tgt/voice"; echo "claude-speak: voice -> $arg (this session)"
     fi
     exit 0
   fi
@@ -73,8 +78,8 @@ if [ "$cmd" = "voices" ] || [ "$cmd" = "voice" ]; then
     '.voices[] | select((.name|ascii_downcase)==($n|ascii_downcase) or .voice_id==$n) | .voice_id' | head -1)
   [ -n "$id" ] || id=$(cs_static_voice_id "$arg")
   [ -n "$id" ] || { echo "claude-speak: voice not found: $arg (try: claude-speak voices)"; exit 1; }
-  printf '%s' "$id" > "$CS_HOME/voice"
-  echo "claude-speak: voice set -> $arg ($id)  (applies to the next spoken segment)"
+  printf '%s' "$id" > "$tgt/voice"
+  echo "claude-speak: voice set -> $arg ($id)  (this session, next spoken segment)"
   exit 0
 fi
 

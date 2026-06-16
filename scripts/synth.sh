@@ -8,10 +8,19 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; . "$DIR/lib.sh"
 base="$1"
 text=$(cat)
 [ -n "$text" ] || exit 1
-engine=$(cs_engine)
+sess_dir=$(dirname "$(dirname "$base")")   # $sd/segs/NNNN -> $sd (for per-session settings)
+engine=$(cs_engine "$sess_dir")
+
+# Voice: per-session override wins, then global, then the given default.
+pick_voice() {
+  local v="$1"
+  [ -s "$CS_HOME/voice" ]  && v=$(cat "$CS_HOME/voice")
+  [ -s "$sess_dir/voice" ] && v=$(cat "$sess_dir/voice")
+  printf '%s' "$v"
+}
 
 say_fallback() {
-  local v=""; [ -s "$CS_HOME/voice" ] && v=$(cat "$CS_HOME/voice")
+  local v; v=$(pick_voice "")
   # use the chosen say voice if valid; otherwise the system default
   if [ -n "$v" ] && /usr/bin/say -v "$v" -o "$base.aiff" "$text" 2>/dev/null; then
     printf '%s' "$base.aiff"; return 0
@@ -23,7 +32,7 @@ say_fallback() {
 case "$engine" in
   openai)
     key=$(cs_key openai)
-    voice="${CLAUDE_TTS_VOICE:-nova}"          # alloy echo fable onyx nova shimmer
+    voice=$(pick_voice "${CLAUDE_TTS_VOICE:-nova}")   # alloy echo fable onyx nova shimmer
     model="${CLAUDE_TTS_MODEL:-gpt-4o-mini-tts}"
     body=$(/usr/bin/jq -n --arg m "$model" --arg v "$voice" --arg i "$text" \
       '{model:$m, voice:$v, input:$i, response_format:"mp3"}')
@@ -36,8 +45,7 @@ case "$engine" in
 
   elevenlabs)
     key=$(cs_key elevenlabs)
-    voice="${CLAUDE_TTS_VOICE:-21m00Tcm4TlvDq8ikWAM}"   # default: Rachel
-    [ -s "$CS_HOME/voice" ] && voice=$(cat "$CS_HOME/voice")   # runtime override (claude-speak voice ...)
+    voice=$(pick_voice "${CLAUDE_TTS_VOICE:-21m00Tcm4TlvDq8ikWAM}")   # per-session/global/default
     model="${CLAUDE_TTS_MODEL:-eleven_turbo_v2_5}"
     fmt="${CLAUDE_TTS_FORMAT:-mp3_44100_128}"
     speed="${CLAUDE_TTS_SPEED:-1.0}"                     # 0.7-1.2 (pitch-preserving)

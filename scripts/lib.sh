@@ -26,8 +26,9 @@ cs_key() { # $1 = openai|elevenlabs -> prints key or nothing
   esac
 }
 
-cs_engine() {
-  [ -s "$CS_HOME/engine" ] && { tr -d '[:space:]' < "$CS_HOME/engine"; return; }  # runtime override
+cs_engine() {  # optional $1 = session dir for a per-session override
+  [ -n "${1:-}" ] && [ -s "$1/engine" ] && { tr -d '[:space:]' < "$1/engine"; return; }  # per-session
+  [ -s "$CS_HOME/engine" ] && { tr -d '[:space:]' < "$CS_HOME/engine"; return; }          # global default
   if [ -n "${CLAUDE_TTS_ENGINE:-}" ]; then printf '%s' "$CLAUDE_TTS_ENGINE"; return; fi
   if cs_have_key elevenlabs; then printf 'elevenlabs'; return; fi
   if cs_have_key openai;     then printf 'openai';     return; fi
