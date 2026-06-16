@@ -104,3 +104,23 @@ hover death` — play any directly: `bash scripts/cue.sh success`.
 ## License
 
 MIT
+
+## Native binary (v0.2, Zig — experimental)
+
+A single-binary rewrite (no `bash`/`jq`/`python3`/`curl`/`afplay`-orchestration
+deps — just the OS `afplay`/`say`) lives in `src/` and builds with `zig build`.
+Prebuilt binaries for macOS (arm64/x64) and Linux (x64/arm64) are attached to
+each [GitHub release](https://github.com/mmsaki/claude-speak/releases).
+
+```
+claude-speak hook <event>     # called by hooks (payload on stdin)
+claude-speak player <session> # background playback daemon (auto-spawned)
+claude-speak next|prev|replay|mute|pause|resume|voice <id>|quit
+claude-speak cues <dir>       # render the sound set
+claude-speak tts <voice> <text> <out.mp3>
+```
+
+It does real ElevenLabs TTS over `std.http` (pure-Zig TLS), native procedural
+cue synthesis, a per-session queue with follow-mode/mute, and instant
+skip/interrupt. The **bash version remains the tested default**; the binary is
+opt-in until it has more mileage. Build from source: `zig build -Doptimize=ReleaseSafe`.
