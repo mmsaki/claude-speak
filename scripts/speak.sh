@@ -13,8 +13,10 @@ sid=$(printf '%s' "$payload" | /usr/bin/jq -r '.session_id // empty')
 [ -n "$sid" ] || sid=$(printf '%s' "$transcript" | /usr/bin/shasum | cut -d' ' -f1)
 
 sd=$(cs_session_dir "$sid"); mkdir -p "$sd/segs"
+printf '%s' "$sd" > "$CS_HOME/current"          # newest active session (for the CLI) —
+                                                # set BEFORE the voice gate so a `voice on`
+                                                # can always re-target a sounds-only session
 cs_voice_on "$sd" || exit 0     # voice off (sounds-only mode) -> don't narrate
-printf '%s' "$sd" > "$CS_HOME/current"          # newest active session (for the CLI)
 
 cs_enqueue_new "$sd" "$transcript" 1 || true
 cs_ensure_player "$sd"
