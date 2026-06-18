@@ -18,6 +18,11 @@ printf '%s' "$sd" > "$CS_HOME/current"          # newest active session (for the
                                                 # can always re-target a sounds-only session
 cs_voice_on "$sd" || exit 0     # voice off (sounds-only mode) -> don't narrate
 
+# If the player isn't running, it will (re)spawn below and prime to the live edge
+# — which would skip the segment we're about to enqueue. Pin pos to the first NEW
+# segment FIRST so the respawned player speaks this reply instead of jumping past
+# it. (Still skips the older backlog: pos = current count + 1, set before enqueue.)
+cs_player_alive "$sd" || printf '%s' "$(( $(cs_seg_count "$sd") + 1 ))" > "$sd/pos"
 cs_enqueue_new "$sd" "$transcript" 1 || true
 cs_ensure_player "$sd"
 
